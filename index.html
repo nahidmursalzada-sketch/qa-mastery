@@ -1094,10 +1094,6 @@ try {
 }
 const auth = firebase.auth();
 auth.languageCode = 'az';
-// Test rejimi: localhost-da və ya test nömrəsi üçün reCAPTCHA-nı bypass et
-if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-  auth.settings.appVerificationDisabledForTesting = true;
-}
 console.log('Auth object created:', auth ? 'OK' : 'FAIL');
 
 let confirmationResult = null;
@@ -1105,8 +1101,15 @@ let countdownInterval = null;
 
 function setupRecaptcha() {
   if (window.recaptchaVerifier) {
-    window.recaptchaVerifier.clear();
+    try { window.recaptchaVerifier.clear(); } catch(e) {}
     window.recaptchaVerifier = null;
+  }
+  // DOM elementini yenidən yarat ki "already rendered" xətası olmasın
+  var oldEl = document.getElementById('recaptcha-container');
+  if (oldEl) {
+    var newEl = document.createElement('div');
+    newEl.id = 'recaptcha-container';
+    oldEl.parentNode.replaceChild(newEl, oldEl);
   }
   window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
     'size': 'invisible',
