@@ -1064,8 +1064,9 @@ async function apiRecord(phone, prize, code) {
   if (CONFIG.APPS_SCRIPT_URL.includes('BURAYA')) return { success: true };
 
   try {
-    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify({
         action: 'record',
         phone: phone,
@@ -1073,10 +1074,9 @@ async function apiRecord(phone, prize, code) {
         code: code,
         browserId: browserId,
         override: phone === CONFIG.ADMIN_PHONE
-      }),
-      redirect: 'follow'
+      })
     });
-    return await res.json();
+    return { success: true };
   } catch (e) {
     console.warn('API record error:', e);
     return { success: true };
