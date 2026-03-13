@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QA Mastery - Şansını Sına!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #2196F3;
+      --primary-dark: #1565C0;
+      --accent: #29B6F6;
+      --accent-glow: #03A9F4;
+      --bg-dark: #0a0e1a;
+      --bg-card: #0f1629;
+      --text: #ffffff;
+      --text-muted: #94a3c0;
+      --success: #29B6F6;
+      --danger: #FF5252;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background animated gradient */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(33,150,243,0.12) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(41,182,246,0.08) 0%, transparent 50%);
+      animation: bgFloat 20s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes bgFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -30px) rotate(2deg); }
+      66% { transform: translate(-20px, 20px) rotate(-1deg); }
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== HERO SECTION ===== */
+    .hero {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(33,150,243,0.2), rgba(21,101,192,0.3));
+      color: #29B6F6;
+      border: 1px solid rgba(33,150,243,0.3);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .hero-logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 16px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 0%, #29B6F6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    /* ===== COURSE INFO ===== */
+    .course-info {
+      background: var(--bg-card);
+      border: 1px solid rgba(33,150,243,0.25);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .course-info h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .feature-list {
+      list-style: none;
+    }
+
+    .feature-list li {
+      padding: 6px 0;
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feature-list li::before {
+      content: '✓';
+      color: var(--success);
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ===== PHONE INPUT ===== */
+    .input-section {
+      margin: 24px 0;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .phone-input-wrap {
+      display: flex;
+      background: var(--bg-card);
+      border: 2px solid rgba(33,150,243,0.35);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .phone-input-wrap:focus-within {
+      border-color: var(--accent);
+    }
+
+    .phone-prefix {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: rgba(33,150,243,0.15);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .phone-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 600;
+      padding: 14px 12px;
+      outline: none;
+      font-family: inherit;
+      letter-spacing: 1px;
+    }
+
+    .phone-input::placeholder {
+      color: rgba(160,160,192,0.4);
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .input-error {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    /* ===== SPIN BUTTON ===== */
+    .spin-btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      margin: 16px 0;
+      background: linear-gradient(135deg, #2196F3, #29B6F6);
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spin-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(33,150,243,0.4);
+    }
+
+    .spin-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spin-btn.loading {
+      pointer-events: none;
+    }
+
+    .spin-btn.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      margin: -12px 0 0 -12px;
+      border: 3px solid rgba(0,0,0,0.2);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: btnSpin 0.6s linear infinite;
+    }
+
+    @keyframes btnSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== WHEEL ===== */
+    .wheel-section {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .wheel-section.active {
+      display: block;
+    }
+
+    .wheel-container {
+      position: relative;
+      display: inline-block;
+      margin: 0 auto;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 32px solid #2196F3;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    }
+
+    canvas#wheel {
+      border-radius: 50%;
+      box-shadow: 0 0 0 8px var(--bg-card),
+                  0 0 0 10px rgba(33,150,243,0.5),
+                  0 0 60px rgba(33,150,243,0.3),
+                  0 0 100px rgba(41,182,246,0.1);
+    }
+
+    .wheel-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--bg-dark), var(--bg-card));
+      border-radius: 50%;
+      border: 3px solid #2196F3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      overflow: hidden;
+      padding: 8px;
+    }
+
+    .wheel-center img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* ===== RESULT MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 2px solid #2196F3;
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+      animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at center, rgba(33,150,243,0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .modal-icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .modal h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .modal .prize-text {
+      font-size: 36px;
+      font-weight: 900;
+      margin: 12px 0;
+      background: linear-gradient(135deg, #29B6F6, #2196F3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #25D366;
+      color: #fff;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      transition: all 0.3s;
+      width: 100%;
+    }
+
+    .whatsapp-btn:hover {
+      background: #1DA851;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(37,211,102,0.3);
+    }
+
+    .whatsapp-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    /* ===== ALREADY SPUN ===== */
+    .already-spun {
+      display: none;
+      text-align: center;
+      padding: 30px 0;
+    }
+
+    .already-spun.active {
+      display: block;
+    }
+
+    .already-spun .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .already-spun h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .already-spun p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid rgba(33,150,243,0.3);
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: all 0.3s;
+      width: 100%;
+    }
+
+    .back-btn:hover {
+      background: rgba(33,150,243,0.1);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* ===== OTP SECTION ===== */
+    .otp-section {
+      display: none;
+      margin: 24px 0;
+    }
+
+    .otp-section.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .otp-info {
+      background: rgba(33,150,243,0.1);
+      border: 1px solid rgba(33,150,243,0.25);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .otp-info strong {
+      color: var(--accent);
+    }
+
+    .otp-inputs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .otp-input {
+      width: 48px;
+      height: 56px;
+      background: var(--bg-card);
+      border: 2px solid rgba(33,150,243,0.35);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 700;
+      font-family: inherit;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .otp-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(33,150,243,0.2);
+    }
+
+    .otp-timer {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    .otp-resend {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+
+    .otp-resend:disabled {
+      color: var(--text-muted);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    /* ===== CONFETTI ===== */
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotateZ(0deg) rotateY(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotateZ(720deg) rotateY(360deg); opacity: 0; }
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      padding: 30px 0 20px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 380px) {
+      .hero h1 { font-size: 26px; }
+      .modal .prize-text { font-size: 28px; }
+    }
+
+    /* ===== SCREEN STATES ===== */
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== SCREEN 1: Landing + Phone Input ===== -->
+  <div class="screen active" id="screenLanding">
+    <div class="hero">
+      <div class="badge">Xüsusi Kampaniya</div>
+      <h1>QA Mastery</h1>
+      <p>Peşəkar Software Testing kursuna endirimli qoşulmaq şansını qaçırma!</p>
+    </div>
+
+    <div class="course-info">
+      <h3>Kursda nələr öyrənəcəksən?</h3>
+      <ul class="feature-list">
+        <li>Automation Testing əsasları</li>
+        <li>API Testing (REST Assured)</li>
+        <li>Selenium WebDriver ilə praktika</li>
+        <li>CI/CD və Test strategiyaları</li>
+        <li>Real layihələr üzərində təcrübə</li>
+      </ul>
+    </div>
+
+    <div class="input-section" id="phoneSection">
+      <label class="input-label" for="phoneInput">WhatsApp nömrəni daxil et:</label>
+      <div class="phone-input-wrap">
+        <div class="phone-prefix">+994</div>
+        <input
+          type="tel"
+          id="phoneInput"
+          class="phone-input"
+          placeholder="XX XXX XX XX"
+          maxlength="12"
+          inputmode="numeric"
+          autocomplete="tel"
+        >
+      </div>
+      <div class="input-hint">Nömrəniz yalnız kampaniya üçün istifadə olunacaq</div>
+      <div class="input-error" id="phoneError"></div>
+    </div>
+
+    <button class="spin-btn" id="sendCodeBtn" disabled>Kod Göndər</button>
+
+    <div class="otp-section" id="otpSection">
+      <div class="otp-info">
+        <strong id="otpPhoneDisplay"></strong> nömrəsinə 6 rəqəmli doğrulama kodu göndərildi. Kodu aşağıya daxil edin.
+      </div>
+      <div class="otp-inputs">
+        <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" data-index="0">
+        <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" data-index="1">
+        <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" data-index="2">
+        <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" data-index="3">
+        <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" data-index="4">
+        <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" data-index="5">
+      </div>
+      <button class="spin-btn" id="verifyBtn" disabled>Təsdiqlə və Çarxı Fırlat!</button>
+      <div class="otp-timer" id="otpTimer">
+        Yenidən kod göndər: <span id="countdown">60</span>s
+      </div>
+      <div class="otp-timer" id="otpResendWrap" style="display:none;">
+        Kod almadınız? <button class="otp-resend" id="resendBtn">Yenidən göndər</button>
+      </div>
+    </div>
+
+    <div id="recaptcha-container"></div>
+  </div>
+
+  <!-- ===== SCREEN 2: Wheel ===== -->
+  <div class="screen" id="screenWheel">
+    <div class="hero" style="padding-bottom: 10px;">
+      <h1 style="font-size: 24px;">Çarxı Fırlat!</h1>
+      <p style="font-size: 14px; margin-top: 4px;" id="spinnerPhone"></p>
+    </div>
+
+    <div class="wheel-section active">
+      <div class="wheel-container" id="wheelContainer">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheel" width="340" height="340"></canvas>
+        <div class="wheel-center"><img src="logo.png" alt="QA"></div>
+      </div>
+    </div>
+
+    <button class="spin-btn" id="doSpinBtn" style="margin-top: 24px;">Fırlat!</button>
+  </div>
+
+  <!-- ===== SCREEN 3: Already Spun ===== -->
+  <div class="screen" id="screenAlready">
+    <div class="already-spun active">
+      <div class="icon">&#128270;</div>
+      <h3>Artıq iştirak etmisiniz!</h3>
+      <p>Bu nömrə ilə artıq çarx fırladılıb.</p>
+      <div class="prize-text" id="alreadyPrize" style="font-size: 28px; font-weight: 900; color: var(--accent); margin: 12px 0;"></div>
+      <p>Endirimdən yararlanmaq üçün bizimlə əlaqə saxlayın:</p>
+      <a class="whatsapp-btn" id="alreadyWhatsapp" href="#" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp-da Yazın
+      </a>
+      <button class="back-btn" id="backBtnAlready">&#8592; Geri Qayıt</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    QA Mastery &copy; 2026 — Bütün hüquqlar qorunur
+  </div>
+</div>
+
+<!-- ===== RESULT MODAL ===== -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <span class="modal-icon">&#127881;</span>
+    <h2>Təbriklər!</h2>
+    <div class="prize-text" id="modalPrize"></div>
+    <p>Bu endirimdən yararlanmaq üçün aşağıdakı düyməyə klikləyib bizimlə WhatsApp-da əlaqə saxlayın.</p>
+    <a class="whatsapp-btn" id="modalWhatsapp" href="#" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Endirimi Al!
+    </a>
+    <button class="back-btn" id="backBtnModal">&#8592; Geri Qayıt</button>
+  </div>
+</div>
+
+<script>
+// ============================================
+// KONFİQURASİYA - Bu hissəni dəyişdirin
+// ============================================
+const CONFIG = {
+  // Google Apps Script URL-inizi bura yapışdırın
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxwCUq53LJXeOjzSKrmUTBOe71UxN9cIAzHdBrEJRlVgMQfGzqXuRnnfMpn6B1DlM_7LQ/exec',
+
+  // Sizin WhatsApp nömrəniz (sahibkar)
+  OWNER_WHATSAPP: '994703738949',
+
+  // Admin test nömrəsi (heç vaxt bloklanmır, həmişə çarx fırlada bilər)
+  ADMIN_PHONE: '994507729119',
+
+  // Firebase konfiqurasiyası (Firebase Console-dan götürün)
+  FIREBASE: {
+    apiKey: "AIzaSyAnJGaQjQyYJbX7limpGSRL4gT42Y9X6I4",
+    authDomain: "qa-mastery.firebaseapp.com",
+    projectId: "qa-mastery",
+    storageBucket: "qa-mastery.firebasestorage.app",
+    messagingSenderId: "730630824085",
+    appId: "1:730630824085:web:55b5c994e2923146307b9c"
+  },
+
+  // Mükafat seqmentləri (weight = nisbi ehtimal)
+  // 15%: 30, 20%: 30, 30%: 25, 40%: 10, 50%: 5 (cəmi 100)
+  SEGMENTS: [
+    { label: '15% Endirim',   color: '#00BCD4', textColor: '#1a1a2e', weight: 30 },
+    { label: '20% Endirim',   color: '#FF9800', textColor: '#1a1a2e', weight: 30 },
+    { label: '30% Endirim',   color: '#4CAF50', textColor: '#ffffff', weight: 25 },
+    { label: '40% Endirim',   color: '#F44336', textColor: '#ffffff', weight: 10 },
+    { label: '50% Endirim',   color: '#FFD700', textColor: '#1a1a2e', weight: 5  },
+    { label: 'Pulsuz Dərs',   color: '#9C27B0', textColor: '#ffffff', weight: 0  },
+  ]
+};
+
+// ============================================
+// GLOBAL STATE
+// ============================================
+const STORAGE_PREFIX = 'qa_spin_';
+let currentPhone = '';
+let isSpinning = false;
+let currentRotation = 0;
+
+function storageKey(phone) {
+  return STORAGE_PREFIX + phone;
+}
+
+// Browser ID (fingerprint light)
+let browserId = localStorage.getItem('qa_mastery_bid');
+if (!browserId) {
+  browserId = 'bid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('qa_mastery_bid', browserId);
+}
+
+// ============================================
+// ELEMENT REFERENCES
+// ============================================
+const $phoneInput = document.getElementById('phoneInput');
+const $phoneError = document.getElementById('phoneError');
+const $sendCodeBtn = document.getElementById('sendCodeBtn');
+const $otpSection = document.getElementById('otpSection');
+const $phoneSection = document.getElementById('phoneSection');
+const $verifyBtn = document.getElementById('verifyBtn');
+const $otpPhoneDisplay = document.getElementById('otpPhoneDisplay');
+const $otpInputs = document.querySelectorAll('.otp-input');
+const $doSpinBtn = document.getElementById('doSpinBtn');
+const $screenLanding = document.getElementById('screenLanding');
+const $screenWheel = document.getElementById('screenWheel');
+const $screenAlready = document.getElementById('screenAlready');
+const $spinnerPhone = document.getElementById('spinnerPhone');
+const $resultModal = document.getElementById('resultModal');
+const $modalPrize = document.getElementById('modalPrize');
+const $modalWhatsapp = document.getElementById('modalWhatsapp');
+const $alreadyPrize = document.getElementById('alreadyPrize');
+const $alreadyWhatsapp = document.getElementById('alreadyWhatsapp');
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+function cleanPhone(raw) {
+  return raw.replace(/[\s\-\(\)]/g, '');
+}
+
+function validatePhone(phone) {
+  const cleaned = cleanPhone(phone);
+  return /^\d{9}$/.test(cleaned);
+}
+
+function fullPhone(phone) {
+  return '994' + cleanPhone(phone);
+}
+
+function showScreen(screen) {
+  [$screenLanding, $screenWheel, $screenAlready].forEach(s => s.classList.remove('active'));
+  screen.classList.add('active');
+}
+
+function showError(msg) {
+  $phoneError.textContent = msg;
+  $phoneError.style.display = msg ? 'block' : 'none';
+}
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'QA-';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function whatsappLink(prize, code) {
+  const msg = encodeURIComponent(
+    `Salam! Mən QA Mastery çarxından endirim qazandım.\n\nTəsdiq kodum: ${code}\n\nZəhmət olmasa yoxlayın.`
+  );
+  return `https://wa.me/${CONFIG.OWNER_WHATSAPP}?text=${msg}`;
+}
+
+// ============================================
+// WEIGHTED RANDOM
+// ============================================
+function weightedRandom() {
+  const totalWeight = CONFIG.SEGMENTS.reduce((sum, s) => sum + s.weight, 0);
+  let rand = Math.random() * totalWeight;
+
+  for (let i = 0; i < CONFIG.SEGMENTS.length; i++) {
+    rand -= CONFIG.SEGMENTS[i].weight;
+    if (rand <= 0) return i;
+  }
+
+  return CONFIG.SEGMENTS.length - 1;
+}
+
+// ============================================
+// DRAW WHEEL
+// ============================================
+function drawWheel(rotation) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const r = cx - 4;
+  const segments = CONFIG.SEGMENTS;
+  const arc = (2 * Math.PI) / segments.length;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rotation);
+
+  for (let i = 0; i < segments.length; i++) {
+    const angle = i * arc;
+
+    // Segment
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, angle, angle + arc);
+    ctx.closePath();
+    ctx.fillStyle = segments[i].color;
+    ctx.fill();
+
+    // Border between segments
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Text
+    ctx.save();
+    ctx.rotate(angle + arc / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = segments[i].textColor;
+    ctx.font = 'bold 14px Inter, sans-serif';
+    ctx.fillText(segments[i].label, r - 20, 5);
+    ctx.restore();
+  }
+
+  // Inner ring decoration
+  ctx.beginPath();
+  ctx.arc(0, 0, r - 8, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots around the edge
+  for (let i = 0; i < segments.length * 3; i++) {
+    const dotAngle = (i / (segments.length * 3)) * 2 * Math.PI;
+    const dotX = Math.cos(dotAngle) * (r - 3);
+    const dotY = Math.sin(dotAngle) * (r - 3);
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = i % 2 === 0 ? '#FFD700' : '#ffffff';
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ============================================
+// SPIN SOUND (Web Audio API - pre-buffered)
+// ============================================
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Tick səsini əvvəlcədən buffer-ə yaz (gecikmə olmur)
+const tickBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.02, audioCtx.sampleRate);
+const tickData = tickBuffer.getChannelData(0);
+for (let i = 0; i < tickData.length; i++) {
+  tickData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (tickData.length * 0.15));
+}
+
+// Win səsini əvvəlcədən buffer-ə yaz
+const winBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.8, audioCtx.sampleRate);
+const winData = winBuffer.getChannelData(0);
+const winNotes = [523, 659, 784, 1047];
+for (let i = 0; i < winData.length; i++) {
+  const t = i / audioCtx.sampleRate;
+  const noteIdx = Math.floor(t / 0.2);
+  if (noteIdx < winNotes.length) {
+    const localT = t - noteIdx * 0.2;
+    winData[i] = Math.sin(2 * Math.PI * winNotes[noteIdx] * t) * 0.3 * Math.exp(-localT * 5);
+  }
+}
+
+function playTick(volume = 0.4) {
+  const src = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  src.buffer = tickBuffer;
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.value = volume;
+  src.start(0);
+}
+
+function playWinSound() {
+  const src = audioCtx.createBufferSource();
+  src.buffer = winBuffer;
+  src.connect(audioCtx.destination);
+  src.start(0);
+}
+
+// ============================================
+// SPIN ANIMATION
+// ============================================
+function spinWheel(targetIndex) {
+  return new Promise((resolve) => {
+    isSpinning = true;
+    $doSpinBtn.disabled = true;
+
+    const segments = CONFIG.SEGMENTS;
+    const arc = (2 * Math.PI) / segments.length;
+
+    // Target angle: center of the target segment, adjusted so pointer (top) hits it
+    const targetAngle = -(targetIndex * arc + arc / 2) - Math.PI / 2;
+    const fullRotations = (5 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
+    const totalRotation = fullRotations + (targetAngle - (currentRotation % (2 * Math.PI)));
+
+    const startRotation = currentRotation;
+    const endRotation = startRotation + totalRotation;
+    const duration = 5000 + Math.random() * 1000;
+    const startTime = performance.now();
+    let lastSegmentIndex = -1;
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function animate(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutCubic(progress);
+
+      currentRotation = startRotation + totalRotation * eased;
+      drawWheel(currentRotation);
+
+      // Tick səsi: hər seqment keçidində
+      const angle = ((currentRotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const currentSegIndex = Math.floor(angle / arc) % segments.length;
+      if (currentSegIndex !== lastSegmentIndex) {
+        lastSegmentIndex = currentSegIndex;
+        const vol = 0.15 + (1 - progress) * 0.25;
+        playTick(vol);
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        isSpinning = false;
+        playWinSound();
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(animate);
+  });
+}
+
+// ============================================
+// CONFETTI
+// ============================================
+function launchConfetti() {
+  const colors = ['#FFD700', '#FF5252', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#00BCD4'];
+
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.top = '-10px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.width = (Math.random() * 8 + 6) + 'px';
+    piece.style.height = (Math.random() * 8 + 6) + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.animation = `confettiFall ${2 + Math.random() * 3}s linear forwards`;
+    piece.style.animationDelay = Math.random() * 0.5 + 's';
+    document.body.appendChild(piece);
+
+    setTimeout(() => piece.remove(), 6000);
+  }
+}
+
+// ============================================
+// API CALLS
+// ============================================
+async function apiCheck(phone) {
+  if (CONFIG.APPS_SCRIPT_URL.includes('BURAYA')) return { exists: false };
+
+  try {
+    const url = `${CONFIG.APPS_SCRIPT_URL}?action=check&phone=${encodeURIComponent(phone)}`;
+    const res = await fetch(url);
+    return await res.json();
+  } catch (e) {
+    console.warn('API check error:', e);
+    return { exists: false };
+  }
+}
+
+async function apiRecord(phone, prize, code) {
+  if (CONFIG.APPS_SCRIPT_URL.includes('BURAYA')) return { success: true };
+
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'record',
+        phone: phone,
+        prize: prize,
+        code: code,
+        browserId: browserId,
+        override: phone === CONFIG.ADMIN_PHONE
+      }),
+      redirect: 'follow'
+    });
+    return await res.json();
+  } catch (e) {
+    console.warn('API record error:', e);
+    return { success: true };
+  }
+}
+
+// ============================================
+// FIREBASE SETUP
+// ============================================
+try {
+  firebase.initializeApp(CONFIG.FIREBASE);
+  console.log('Firebase initialized OK, apiKey:', CONFIG.FIREBASE.apiKey);
+} catch(e) {
+  console.error('Firebase init FAILED:', e);
+}
+const auth = firebase.auth();
+auth.languageCode = 'az';
+// Test rejimi: localhost-da və ya test nömrəsi üçün reCAPTCHA-nı bypass et
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  auth.settings.appVerificationDisabledForTesting = true;
+}
+console.log('Auth object created:', auth ? 'OK' : 'FAIL');
+
+let confirmationResult = null;
+let countdownInterval = null;
+
+function setupRecaptcha() {
+  if (window.recaptchaVerifier) {
+    window.recaptchaVerifier.clear();
+    window.recaptchaVerifier = null;
+  }
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    'size': 'invisible',
+    'callback': () => {
+      console.log('reCAPTCHA solved');
+    },
+    'expired-callback': () => {
+      console.log('reCAPTCHA expired');
+      window.recaptchaVerifier = null;
+    }
+  });
+  return window.recaptchaVerifier.render();
+}
+
+// ============================================
+// MAIN FLOW
+// ============================================
+
+// Phone input validation
+$phoneInput.addEventListener('input', () => {
+  showError('');
+  const valid = validatePhone($phoneInput.value);
+  $sendCodeBtn.disabled = !valid;
+});
+
+// Format phone input
+$phoneInput.addEventListener('input', (e) => {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val.length > 9) val = val.slice(0, 9);
+
+  // Format: XX XXX XX XX
+  let formatted = '';
+  for (let i = 0; i < val.length; i++) {
+    if (i === 2 || i === 5 || i === 7) formatted += ' ';
+    formatted += val[i];
+  }
+  e.target.value = formatted;
+});
+
+// OTP input auto-focus & auto-fill
+$otpInputs.forEach((input, i) => {
+  input.addEventListener('input', (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    e.target.value = val.slice(0, 1);
+    if (val && i < $otpInputs.length - 1) {
+      $otpInputs[i + 1].focus();
+    }
+    checkOtpComplete();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+      $otpInputs[i - 1].focus();
+    }
+  });
+  // Paste support
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+    for (let j = 0; j < Math.min(paste.length, 6); j++) {
+      $otpInputs[j].value = paste[j];
+    }
+    if (paste.length >= 6) $otpInputs[5].focus();
+    checkOtpComplete();
+  });
+});
+
+function checkOtpComplete() {
+  const code = Array.from($otpInputs).map(i => i.value).join('');
+  $verifyBtn.disabled = code.length !== 6;
+}
+
+function getOtpCode() {
+  return Array.from($otpInputs).map(i => i.value).join('');
+}
+
+function startCountdown() {
+  let seconds = 60;
+  document.getElementById('countdown').textContent = seconds;
+  document.getElementById('otpTimer').style.display = 'block';
+  document.getElementById('otpResendWrap').style.display = 'none';
+
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    seconds--;
+    document.getElementById('countdown').textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(countdownInterval);
+      document.getElementById('otpTimer').style.display = 'none';
+      document.getElementById('otpResendWrap').style.display = 'block';
+    }
+  }, 1000);
+}
+
+// "Kod Göndər" button
+$sendCodeBtn.addEventListener('click', async () => {
+  if (!validatePhone($phoneInput.value)) {
+    showError('Düzgün nömrə daxil edin');
+    return;
+  }
+
+  currentPhone = fullPhone($phoneInput.value);
+  const isAdmin = currentPhone === CONFIG.ADMIN_PHONE;
+
+  // Admin nömrəsi üçün yoxlamaları bypass et
+  if (!isAdmin) {
+    // 1) localStorage yoxla (bu nömrə üçün)
+    const stored = localStorage.getItem(storageKey(currentPhone));
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        showAlreadySpun(data.prize, data.code);
+        return;
+      } catch (e) {}
+    }
+
+    // 2) Server-side yoxla
+    $sendCodeBtn.classList.add('loading');
+    $sendCodeBtn.textContent = '';
+    const check = await apiCheck(currentPhone);
+
+    if (check.exists) {
+      $sendCodeBtn.classList.remove('loading');
+      $sendCodeBtn.textContent = 'Kod Göndər';
+      localStorage.setItem(storageKey(currentPhone), JSON.stringify({
+        prize: check.prize,
+      timestamp: Date.now()
+    }));
+    showAlreadySpun(check.prize);
+    return;
+  }
+  } // !isAdmin sonu
+
+  // 3) SMS göndər
+  $sendCodeBtn.classList.add('loading');
+  $sendCodeBtn.textContent = '';
+  try {
+    await setupRecaptcha();
+    const phoneNumber = '+' + currentPhone;
+    console.log('Sending SMS to:', phoneNumber);
+    confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
+
+    $sendCodeBtn.classList.remove('loading');
+    $sendCodeBtn.textContent = 'Kod Göndər';
+
+    // OTP bölməsini göstər
+    $otpPhoneDisplay.textContent = '+' + currentPhone;
+    $otpSection.classList.add('active');
+    $phoneSection.style.opacity = '0.5';
+    $phoneSection.style.pointerEvents = 'none';
+    $sendCodeBtn.style.display = 'none';
+    $otpInputs[0].focus();
+    startCountdown();
+  } catch (err) {
+    $sendCodeBtn.classList.remove('loading');
+    $sendCodeBtn.textContent = 'Kod Göndər';
+    console.error('SMS error:', err);
+
+    // Reset reCAPTCHA for retry
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+      window.recaptchaVerifier = null;
+    }
+
+    if (err.code === 'auth/too-many-requests') {
+      showError('Çox sayda cəhd. Bir az gözləyin.');
+    } else if (err.code === 'auth/invalid-phone-number') {
+      showError('Nömrə düzgün deyil.');
+    } else if (err.code === 'auth/operation-not-allowed') {
+      showError('Phone Auth aktiv deyil. Firebase Console-da yoxlayın.');
+    } else if (err.code === 'auth/captcha-check-failed') {
+      showError('reCAPTCHA xətası. Səhifəni yeniləyin.');
+    } else {
+      showError('SMS xətası: ' + (err.code || err.message));
+    }
+  }
+});
+
+// "Təsdiqlə" button
+$verifyBtn.addEventListener('click', async () => {
+  const code = getOtpCode();
+  if (code.length !== 6 || !confirmationResult) return;
+
+  $verifyBtn.classList.add('loading');
+  $verifyBtn.textContent = '';
+
+  try {
+    await confirmationResult.confirm(code);
+
+    $verifyBtn.classList.remove('loading');
+    $verifyBtn.textContent = 'Təsdiqlə və Çarxı Fırlat!';
+
+    // Doğrulandı — çarx ekranına keç
+    $spinnerPhone.textContent = '+' + currentPhone;
+    showScreen($screenWheel);
+    drawWheel(currentRotation);
+  } catch (err) {
+    $verifyBtn.classList.remove('loading');
+    $verifyBtn.textContent = 'Təsdiqlə və Çarxı Fırlat!';
+    console.error('Verify error:', err);
+
+    if (err.code === 'auth/invalid-verification-code') {
+      showError('Kod yanlışdır. Yenidən yoxlayın.');
+    } else {
+      showError('Doğrulama uğursuz oldu.');
+    }
+  }
+});
+
+// Resend button
+document.getElementById('resendBtn').addEventListener('click', async () => {
+  try {
+    await setupRecaptcha();
+
+    const phoneNumber = '+' + currentPhone;
+    confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
+    $otpInputs.forEach(i => i.value = '');
+    $otpInputs[0].focus();
+    $verifyBtn.disabled = true;
+    startCountdown();
+    showError('');
+  } catch (err) {
+    console.error('Resend error:', err);
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+      window.recaptchaVerifier = null;
+    }
+    showError('Yenidən göndərilə bilmədi.');
+  }
+});
+
+// "Fırlat" button (wheel screen)
+$doSpinBtn.addEventListener('click', async () => {
+  if (isSpinning) return;
+
+  // Səsi dərhal aktivləşdir (brauzer tələbi: user gesture ilə)
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  const targetIndex = weightedRandom();
+  const prize = CONFIG.SEGMENTS[targetIndex].label;
+  const code = generateCode();
+
+  await spinWheel(targetIndex);
+
+  const isAdmin = currentPhone === CONFIG.ADMIN_PHONE;
+
+  // Save locally dərhal (admin istisna)
+  if (!isAdmin) {
+    localStorage.setItem(storageKey(currentPhone), JSON.stringify({
+      prize: prize,
+      code: code,
+      timestamp: Date.now()
+    }));
+  }
+
+  // Nəticəni dərhal göstər
+  showResult(prize, code);
+
+  // Server-ə arxa planda yaz (gözləmə yoxdur)
+  apiRecord(currentPhone, prize, code).then(result => {
+    if (!isAdmin && result.success === false && result.message === 'already_spun') {
+      console.warn('Server: already spun');
+    }
+  });
+});
+
+function showResult(prize, code) {
+  $modalPrize.textContent = prize;
+  $modalWhatsapp.href = whatsappLink(prize, code);
+  $resultModal.classList.add('active');
+  launchConfetti();
+}
+
+function showAlreadySpun(prize, code) {
+  $alreadyPrize.textContent = prize;
+  $alreadyWhatsapp.href = whatsappLink(prize, code || '');
+  showScreen($screenAlready);
+}
+
+// ============================================
+// BACK BUTTONS
+// ============================================
+function goBackToLanding() {
+  currentPhone = '';
+  $phoneInput.value = '';
+  $sendCodeBtn.disabled = true;
+  $sendCodeBtn.style.display = '';
+  $resultModal.classList.remove('active');
+  $otpSection.classList.remove('active');
+  $phoneSection.style.opacity = '';
+  $phoneSection.style.pointerEvents = '';
+  $otpInputs.forEach(i => i.value = '');
+  $verifyBtn.disabled = true;
+  confirmationResult = null;
+  clearInterval(countdownInterval);
+  showError('');
+  showScreen($screenLanding);
+}
+
+document.getElementById('backBtnAlready').addEventListener('click', goBackToLanding);
+document.getElementById('backBtnModal').addEventListener('click', goBackToLanding);
+
+// ============================================
+// INIT
+// ============================================
+(function init() {
+  // Draw initial wheel
+  drawWheel(0);
+
+  // Warm up API
+  if (!CONFIG.APPS_SCRIPT_URL.includes('BURAYA')) {
+    fetch(CONFIG.APPS_SCRIPT_URL + '?action=warmup').catch(() => {});
+  }
+})();
+</script>
+
+</body>
+</html>
