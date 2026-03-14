@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check index.html exists
+        run: test -f index.html
+
+      - name: Validate HTML structure
+        run: |
+          # Check for required HTML elements
+          grep -q '<!DOCTYPE html\|<!doctype html' index.html
+          grep -q '<html' index.html
+          grep -q '<head' index.html
+          grep -q '<body' index.html
+          echo "HTML structure validation passed"
+
+      - name: Check for broken local asset references
+        run: |
+          # Extract local file references and verify they exist
+          MISSING=0
+          for file in $(grep -oP 'src="(?!http|data:|#)([^"]+)"' index.html | sed 's/src="//;s/"//'); do
+            if [ ! -f "$file" ]; then
+              echo "Missing asset: $file"
+              MISSING=1
+            fi
+          done
+          if [ "$MISSING" -eq 1 ]; then
+            echo "Some referenced assets are missing!"
+            exit 1
+          fi
+          echo "All local assets found"
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: validate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Netlify (Preview)
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: "."
+          production-deploy: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Preview deploy from PR #${{ github.event.pull_request.number }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  deploy-production:
+    name: Deploy Production
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Netlify (Production)
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: "."
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Production deploy from commit ${{ github.sha }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
