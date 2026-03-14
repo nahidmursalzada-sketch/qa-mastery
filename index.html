@@ -6,8 +6,10 @@
   <title>QA Mastery - Şansını Sına!</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- OTP_MODE: Firebase SMS doğrulaması (hazırda deaktivdir, aktivləşdirmək üçün aşağıdakı şərhi açın)
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -648,8 +650,9 @@
       <div class="input-error" id="phoneError"></div>
     </div>
 
-    <button class="spin-btn" id="sendCodeBtn" disabled>Kod Göndər</button>
+    <button class="spin-btn" id="sendCodeBtn" disabled>Çarxı Fırlat!</button>
 
+    <!-- OTP_MODE: SMS doğrulama bölməsi (hazırda deaktivdir)
     <div class="otp-section" id="otpSection">
       <div class="otp-info">
         <strong id="otpPhoneDisplay"></strong> nömrəsinə 6 rəqəmli doğrulama kodu göndərildi. Kodu aşağıya daxil edin.
@@ -670,8 +673,8 @@
         Kod almadınız? <button class="otp-resend" id="resendBtn">Yenidən göndər</button>
       </div>
     </div>
-
     <div id="recaptcha-container"></div>
+    -->
   </div>
 
   <!-- ===== SCREEN 2: Wheel ===== -->
@@ -1085,8 +1088,10 @@ async function apiRecord(phone, prize, code) {
 }
 
 // ============================================
-// FIREBASE SETUP
+// OTP_MODE: FIREBASE SETUP (hazırda deaktivdir)
+// Aktivləşdirmək üçün Firebase skriptlərini açın və bu bloku şərhdən çıxarın
 // ============================================
+/*
 try {
   firebase.initializeApp(CONFIG.FIREBASE);
   console.log('Firebase initialized OK, apiKey:', CONFIG.FIREBASE.apiKey);
@@ -1105,7 +1110,6 @@ function setupRecaptcha() {
     try { window.recaptchaVerifier.clear(); } catch(e) {}
     window.recaptchaVerifier = null;
   }
-  // DOM elementini yenidən yarat ki "already rendered" xətası olmasın
   var oldEl = document.getElementById('recaptcha-container');
   if (oldEl) {
     var newEl = document.createElement('div');
@@ -1114,16 +1118,12 @@ function setupRecaptcha() {
   }
   window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
     'size': 'invisible',
-    'callback': () => {
-      console.log('reCAPTCHA solved');
-    },
-    'expired-callback': () => {
-      console.log('reCAPTCHA expired');
-      window.recaptchaVerifier = null;
-    }
+    'callback': () => { console.log('reCAPTCHA solved'); },
+    'expired-callback': () => { window.recaptchaVerifier = null; }
   });
   return window.recaptchaVerifier.render();
 }
+*/
 
 // ============================================
 // MAIN FLOW
@@ -1204,7 +1204,7 @@ function startCountdown() {
   }, 1000);
 }
 
-// "Kod Göndər" button
+// "Çarxı Fırlat" button — OTP-siz axın
 $sendCodeBtn.addEventListener('click', async () => {
   if (!validatePhone($phoneInput.value)) {
     showError('Düzgün nömrə daxil edin');
@@ -1214,9 +1214,8 @@ $sendCodeBtn.addEventListener('click', async () => {
   currentPhone = fullPhone($phoneInput.value);
   const isAdmin = currentPhone === CONFIG.ADMIN_PHONE;
 
-  // Admin nömrəsi üçün yoxlamaları bypass et
   if (!isAdmin) {
-    // 1) localStorage yoxla (bu nömrə üçün)
+    // 1) localStorage yoxla
     const stored = localStorage.getItem(storageKey(currentPhone));
     if (stored) {
       try {
@@ -1233,84 +1232,42 @@ $sendCodeBtn.addEventListener('click', async () => {
 
     if (check.exists) {
       $sendCodeBtn.classList.remove('loading');
-      $sendCodeBtn.textContent = 'Kod Göndər';
+      $sendCodeBtn.textContent = 'Çarxı Fırlat!';
       localStorage.setItem(storageKey(currentPhone), JSON.stringify({
         prize: check.prize,
-      timestamp: Date.now()
-    }));
-    showAlreadySpun(check.prize);
-    return;
-  }
-  } // !isAdmin sonu
-
-  // 3) SMS göndər
-  $sendCodeBtn.classList.add('loading');
-  $sendCodeBtn.textContent = '';
-  try {
-    await setupRecaptcha();
-    const phoneNumber = '+' + currentPhone;
-    console.log('Sending SMS to:', phoneNumber);
-    confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
-
-    $sendCodeBtn.classList.remove('loading');
-    $sendCodeBtn.textContent = 'Kod Göndər';
-
-    // OTP bölməsini göstər
-    $otpPhoneDisplay.textContent = '+' + currentPhone;
-    $otpSection.classList.add('active');
-    $phoneSection.style.opacity = '0.5';
-    $phoneSection.style.pointerEvents = 'none';
-    $sendCodeBtn.style.display = 'none';
-    $otpInputs[0].focus();
-    startCountdown();
-  } catch (err) {
-    $sendCodeBtn.classList.remove('loading');
-    $sendCodeBtn.textContent = 'Kod Göndər';
-    console.error('SMS error:', err);
-
-    // Reset reCAPTCHA for retry
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = null;
-    }
-
-    if (err.code === 'auth/too-many-requests') {
-      showError('Çox sayda cəhd. Bir az gözləyin.');
-    } else if (err.code === 'auth/invalid-phone-number') {
-      showError('Nömrə düzgün deyil.');
-    } else if (err.code === 'auth/operation-not-allowed') {
-      showError('Phone Auth aktiv deyil. Firebase Console-da yoxlayın.');
-    } else if (err.code === 'auth/captcha-check-failed') {
-      showError('reCAPTCHA xətası. Səhifəni yeniləyin.');
-    } else {
-      showError('SMS xətası: ' + (err.code || err.message));
+        timestamp: Date.now()
+      }));
+      showAlreadySpun(check.prize);
+      return;
     }
   }
+
+  // Birbaşa çarx ekranına keç
+  $sendCodeBtn.classList.remove('loading');
+  $sendCodeBtn.textContent = 'Çarxı Fırlat!';
+  $spinnerPhone.textContent = '+' + currentPhone;
+  showScreen($screenWheel);
+  drawWheel(currentRotation);
 });
 
+// OTP_MODE: SMS doğrulama düymələri (hazırda deaktivdir)
+/*
 // "Təsdiqlə" button
 $verifyBtn.addEventListener('click', async () => {
   const code = getOtpCode();
   if (code.length !== 6 || !confirmationResult) return;
-
   $verifyBtn.classList.add('loading');
   $verifyBtn.textContent = '';
-
   try {
     await confirmationResult.confirm(code);
-
     $verifyBtn.classList.remove('loading');
     $verifyBtn.textContent = 'Təsdiqlə və Çarxı Fırlat!';
-
-    // Doğrulandı — çarx ekranına keç
     $spinnerPhone.textContent = '+' + currentPhone;
     showScreen($screenWheel);
     drawWheel(currentRotation);
   } catch (err) {
     $verifyBtn.classList.remove('loading');
     $verifyBtn.textContent = 'Təsdiqlə və Çarxı Fırlat!';
-    console.error('Verify error:', err);
-
     if (err.code === 'auth/invalid-verification-code') {
       showError('Kod yanlışdır. Yenidən yoxlayın.');
     } else {
@@ -1323,7 +1280,6 @@ $verifyBtn.addEventListener('click', async () => {
 document.getElementById('resendBtn').addEventListener('click', async () => {
   try {
     await setupRecaptcha();
-
     const phoneNumber = '+' + currentPhone;
     confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
     $otpInputs.forEach(i => i.value = '');
@@ -1332,14 +1288,11 @@ document.getElementById('resendBtn').addEventListener('click', async () => {
     startCountdown();
     showError('');
   } catch (err) {
-    console.error('Resend error:', err);
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = null;
-    }
+    if (window.recaptchaVerifier) { window.recaptchaVerifier.clear(); window.recaptchaVerifier = null; }
     showError('Yenidən göndərilə bilmədi.');
   }
 });
+*/
 
 // "Fırlat" button (wheel screen)
 $doSpinBtn.addEventListener('click', async () => {
@@ -1398,15 +1351,16 @@ function goBackToLanding() {
   $sendCodeBtn.disabled = true;
   $sendCodeBtn.style.display = '';
   $resultModal.classList.remove('active');
-  $otpSection.classList.remove('active');
-  $phoneSection.style.opacity = '';
-  $phoneSection.style.pointerEvents = '';
-  $otpInputs.forEach(i => i.value = '');
-  $verifyBtn.disabled = true;
-  confirmationResult = null;
-  clearInterval(countdownInterval);
   showError('');
   showScreen($screenLanding);
+  // OTP_MODE: aşağıdakıları da aktivləşdir
+  // $otpSection.classList.remove('active');
+  // $phoneSection.style.opacity = '';
+  // $phoneSection.style.pointerEvents = '';
+  // $otpInputs.forEach(i => i.value = '');
+  // $verifyBtn.disabled = true;
+  // confirmationResult = null;
+  // clearInterval(countdownInterval);
 }
 
 document.getElementById('backBtnAlready').addEventListener('click', goBackToLanding);
