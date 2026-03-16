@@ -724,8 +724,6 @@ const CONFIG = {
   // Sizin WhatsApp nömrəniz (sahibkar)
   OWNER_WHATSAPP: '994703738949',
 
-  // Admin giriş şifrəsi — URL-də ?admin=bu_şifrə ilə istifadə edin
-  ADMIN_SECRET: 'qamaster2026',
 
   // Firebase konfiqurasiyası (Firebase Console-dan götürün)
   FIREBASE: {
@@ -756,8 +754,6 @@ const DEVICE_KEY = 'qa_spin_done';
 let isSpinning = false;
 let currentRotation = 0;
 
-// Admin yoxlaması — URL: ?admin=qamaster2026
-const isAdmin = new URLSearchParams(window.location.search).get('admin') === CONFIG.ADMIN_SECRET;
 
 // Browser ID (fingerprint light)
 let browserId = localStorage.getItem('qa_mastery_bid');
@@ -1032,7 +1028,7 @@ async function apiRecord(phone, prize, code) {
         browserId: phone,
         prize: prize,
         code: code,
-        override: isAdmin
+        override: false
       })
     });
     return { success: true };
@@ -1088,15 +1084,13 @@ function setupRecaptcha() {
 
 // "Çarxı Fırlat" button — cihaz limiti ilə
 $sendCodeBtn.addEventListener('click', () => {
-  if (!isAdmin) {
-    const stored = localStorage.getItem(DEVICE_KEY);
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        showAlreadySpun(data.prize, data.code);
-        return;
-      } catch (e) {}
-    }
+  const stored = localStorage.getItem(DEVICE_KEY);
+  if (stored) {
+    try {
+      const data = JSON.parse(stored);
+      showAlreadySpun(data.prize, data.code);
+      return;
+    } catch (e) {}
   }
   showScreen($screenWheel);
   drawWheel(currentRotation);
@@ -1159,14 +1153,12 @@ $doSpinBtn.addEventListener('click', async () => {
 
   await spinWheel(targetIndex);
 
-  // Cihazda saxla (admin istisna)
-  if (!isAdmin) {
-    localStorage.setItem(DEVICE_KEY, JSON.stringify({
-      prize: prize,
-      code: code,
-      timestamp: Date.now()
-    }));
-  }
+  // Cihazda saxla
+  localStorage.setItem(DEVICE_KEY, JSON.stringify({
+    prize: prize,
+    code: code,
+    timestamp: Date.now()
+  }));
 
   // Nəticəni dərhal göstər
   showResult(prize, code);
