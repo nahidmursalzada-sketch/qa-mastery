@@ -1082,15 +1082,19 @@ function setupRecaptcha() {
 
 
 
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
 // "Çarxı Fırlat" button — cihaz limiti ilə
 $sendCodeBtn.addEventListener('click', () => {
-  const stored = localStorage.getItem(DEVICE_KEY);
-  if (stored) {
-    try {
-      const data = JSON.parse(stored);
-      showAlreadySpun(data.prize, data.code);
-      return;
-    } catch (e) {}
+  if (!isLocal) {
+    const stored = localStorage.getItem(DEVICE_KEY);
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        showAlreadySpun(data.prize, data.code);
+        return;
+      } catch (e) {}
+    }
   }
   showScreen($screenWheel);
   drawWheel(currentRotation);
@@ -1153,12 +1157,14 @@ $doSpinBtn.addEventListener('click', async () => {
 
   await spinWheel(targetIndex);
 
-  // Cihazda saxla
-  localStorage.setItem(DEVICE_KEY, JSON.stringify({
-    prize: prize,
-    code: code,
-    timestamp: Date.now()
-  }));
+  // Cihazda saxla (lokal mühitdə yazılmır)
+  if (!isLocal) {
+    localStorage.setItem(DEVICE_KEY, JSON.stringify({
+      prize: prize,
+      code: code,
+      timestamp: Date.now()
+    }));
+  }
 
   // Nəticəni dərhal göstər
   showResult(prize, code);
