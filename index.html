@@ -633,25 +633,7 @@
       </ul>
     </div>
 
-    <div class="input-section" id="phoneSection">
-      <label class="input-label" for="phoneInput">WhatsApp nömrənizi daxil edin:</label>
-      <div class="phone-input-wrap">
-        <div class="phone-prefix">+994</div>
-        <input
-          type="tel"
-          id="phoneInput"
-          class="phone-input"
-          placeholder="XX XXX XX XX"
-          maxlength="12"
-          inputmode="numeric"
-          autocomplete="tel"
-        >
-      </div>
-      <div class="input-hint">Nömrəniz yalnız kampaniya üçün istifadə olunacaq</div>
-      <div class="input-error" id="phoneError"></div>
-    </div>
-
-    <button class="spin-btn" id="sendCodeBtn" disabled>Çarxı Fırlat!</button>
+    <button class="spin-btn" id="sendCodeBtn">Çarxı Fırlat!</button>
 
     <!-- OTP_MODE: SMS doğrulama bölməsi (hazırda deaktivdir)
     <div class="otp-section" id="otpSection">
@@ -682,7 +664,6 @@
   <div class="screen" id="screenWheel">
     <div class="hero" style="padding-bottom: 10px;">
       <h1 style="font-size: 24px;">Çarxı Fırlat!</h1>
-      <p style="font-size: 14px; margin-top: 4px;" id="spinnerPhone"></p>
     </div>
 
     <div class="wheel-section active">
@@ -743,8 +724,8 @@ const CONFIG = {
   // Sizin WhatsApp nömrəniz (sahibkar)
   OWNER_WHATSAPP: '994703738949',
 
-  // Admin test nömrəsi (heç vaxt bloklanmır, həmişə çarx fırlada bilər)
-  ADMIN_PHONE: '994507729119',
+  // Admin giriş şifrəsi — URL-də ?admin=bu_şifrə ilə istifadə edin
+  ADMIN_SECRET: 'qamaster2026',
 
   // Firebase konfiqurasiyası (Firebase Console-dan götürün)
   FIREBASE: {
@@ -771,14 +752,12 @@ const CONFIG = {
 // ============================================
 // GLOBAL STATE
 // ============================================
-const STORAGE_PREFIX = 'qa_spin_';
-let currentPhone = '';
+const DEVICE_KEY = 'qa_spin_done';
 let isSpinning = false;
 let currentRotation = 0;
 
-function storageKey(phone) {
-  return STORAGE_PREFIX + phone;
-}
+// Admin yoxlaması — URL: ?admin=qamaster2026
+const isAdmin = new URLSearchParams(window.location.search).get('admin') === CONFIG.ADMIN_SECRET;
 
 // Browser ID (fingerprint light)
 let browserId = localStorage.getItem('qa_mastery_bid');
@@ -1074,11 +1053,10 @@ async function apiRecord(phone, prize, code) {
       mode: 'no-cors',
       body: JSON.stringify({
         action: 'record',
-        phone: phone,
+        browserId: phone,
         prize: prize,
         code: code,
-        browserId: browserId,
-        override: phone === CONFIG.ADMIN_PHONE
+        override: isAdmin
       })
     });
     return { success: true };
@@ -1205,19 +1183,10 @@ function startCountdown() {
   }, 1000);
 }
 
-// "Çarxı Fırlat" button — OTP-siz axın
-$sendCodeBtn.addEventListener('click', async () => {
-  if (!validatePhone($phoneInput.value)) {
-    showError('Düzgün nömrə daxil edin');
-    return;
-  }
-
-  currentPhone = fullPhone($phoneInput.value);
-  const isAdmin = currentPhone === CONFIG.ADMIN_PHONE;
-
+// "Çarxı Fırlat" button — cihaz limiti ilə
+$sendCodeBtn.addEventListener('click', () => {
   if (!isAdmin) {
-    // 1) localStorage yoxla
-    const stored = localStorage.getItem(storageKey(currentPhone));
+    const stored = localStorage.getItem(DEVICE_KEY);
     if (stored) {
       try {
         const data = JSON.parse(stored);
@@ -1225,28 +1194,7 @@ $sendCodeBtn.addEventListener('click', async () => {
         return;
       } catch (e) {}
     }
-
-    // 2) Server-side yoxla
-    $sendCodeBtn.classList.add('loading');
-    $sendCodeBtn.textContent = '';
-    const check = await apiCheck(currentPhone);
-
-    if (check.exists) {
-      $sendCodeBtn.classList.remove('loading');
-      $sendCodeBtn.textContent = 'Çarxı Fırlat!';
-      localStorage.setItem(storageKey(currentPhone), JSON.stringify({
-        prize: check.prize,
-        timestamp: Date.now()
-      }));
-      showAlreadySpun(check.prize);
-      return;
-    }
   }
-
-  // Birbaşa çarx ekranına keç
-  $sendCodeBtn.classList.remove('loading');
-  $sendCodeBtn.textContent = 'Çarxı Fırlat!';
-  $spinnerPhone.textContent = '+' + currentPhone;
   showScreen($screenWheel);
   drawWheel(currentRotation);
 });
@@ -1308,11 +1256,9 @@ $doSpinBtn.addEventListener('click', async () => {
 
   await spinWheel(targetIndex);
 
-  const isAdmin = currentPhone === CONFIG.ADMIN_PHONE;
-
-  // Save locally dərhal (admin istisna)
+  // Cihazda saxla (admin istisna)
   if (!isAdmin) {
-    localStorage.setItem(storageKey(currentPhone), JSON.stringify({
+    localStorage.setItem(DEVICE_KEY, JSON.stringify({
       prize: prize,
       code: code,
       timestamp: Date.now()
@@ -1322,12 +1268,8 @@ $doSpinBtn.addEventListener('click', async () => {
   // Nəticəni dərhal göstər
   showResult(prize, code);
 
-  // Server-ə arxa planda yaz (gözləmə yoxdur)
-  apiRecord(currentPhone, prize, code).then(result => {
-    if (!isAdmin && result.success === false && result.message === 'already_spun') {
-      console.warn('Server: already spun');
-    }
-  });
+  // Server-ə arxa planda yaz
+  apiRecord(browserId, prize, code);
 });
 
 function showResult(prize, code) {
@@ -1347,21 +1289,8 @@ function showAlreadySpun(prize, code) {
 // BACK BUTTONS
 // ============================================
 function goBackToLanding() {
-  currentPhone = '';
-  $phoneInput.value = '';
-  $sendCodeBtn.disabled = true;
-  $sendCodeBtn.style.display = '';
   $resultModal.classList.remove('active');
-  showError('');
   showScreen($screenLanding);
-  // OTP_MODE: aşağıdakıları da aktivləşdir
-  // $otpSection.classList.remove('active');
-  // $phoneSection.style.opacity = '';
-  // $phoneSection.style.pointerEvents = '';
-  // $otpInputs.forEach(i => i.value = '');
-  // $verifyBtn.disabled = true;
-  // confirmationResult = null;
-  // clearInterval(countdownInterval);
 }
 
 document.getElementById('backBtnAlready').addEventListener('click', goBackToLanding);
