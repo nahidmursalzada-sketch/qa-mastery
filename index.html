@@ -769,19 +769,11 @@ if (!browserId) {
 // ============================================
 // ELEMENT REFERENCES
 // ============================================
-const $phoneInput = document.getElementById('phoneInput');
-const $phoneError = document.getElementById('phoneError');
 const $sendCodeBtn = document.getElementById('sendCodeBtn');
-const $otpSection = document.getElementById('otpSection');
-const $phoneSection = document.getElementById('phoneSection');
-const $verifyBtn = document.getElementById('verifyBtn');
-const $otpPhoneDisplay = document.getElementById('otpPhoneDisplay');
-const $otpInputs = document.querySelectorAll('.otp-input');
 const $doSpinBtn = document.getElementById('doSpinBtn');
 const $screenLanding = document.getElementById('screenLanding');
 const $screenWheel = document.getElementById('screenWheel');
 const $screenAlready = document.getElementById('screenAlready');
-const $spinnerPhone = document.getElementById('spinnerPhone');
 const $resultModal = document.getElementById('resultModal');
 const $modalPrize = document.getElementById('modalPrize');
 const $modalWhatsapp = document.getElementById('modalWhatsapp');
@@ -793,28 +785,12 @@ const ctx = canvas.getContext('2d');
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
-function cleanPhone(raw) {
-  return raw.replace(/[\s\-\(\)]/g, '');
-}
-
-function validatePhone(phone) {
-  const cleaned = cleanPhone(phone);
-  return /^\d{9}$/.test(cleaned);
-}
-
-function fullPhone(phone) {
-  return '994' + cleanPhone(phone);
-}
 
 function showScreen(screen) {
   [$screenLanding, $screenWheel, $screenAlready].forEach(s => s.classList.remove('active'));
   screen.classList.add('active');
 }
 
-function showError(msg) {
-  $phoneError.textContent = msg;
-  $phoneError.style.display = msg ? 'block' : 'none';
-}
 
 function generateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1108,80 +1084,7 @@ function setupRecaptcha() {
 // MAIN FLOW
 // ============================================
 
-// Phone input validation
-$phoneInput.addEventListener('input', () => {
-  showError('');
-  const valid = validatePhone($phoneInput.value);
-  $sendCodeBtn.disabled = !valid;
-});
 
-// Format phone input
-$phoneInput.addEventListener('input', (e) => {
-  let val = e.target.value.replace(/\D/g, '');
-  if (val.length > 9) val = val.slice(0, 9);
-
-  // Format: XX XXX XX XX
-  let formatted = '';
-  for (let i = 0; i < val.length; i++) {
-    if (i === 2 || i === 5 || i === 7) formatted += ' ';
-    formatted += val[i];
-  }
-  e.target.value = formatted;
-});
-
-// OTP input auto-focus & auto-fill
-$otpInputs.forEach((input, i) => {
-  input.addEventListener('input', (e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    e.target.value = val.slice(0, 1);
-    if (val && i < $otpInputs.length - 1) {
-      $otpInputs[i + 1].focus();
-    }
-    checkOtpComplete();
-  });
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Backspace' && !e.target.value && i > 0) {
-      $otpInputs[i - 1].focus();
-    }
-  });
-  // Paste support
-  input.addEventListener('paste', (e) => {
-    e.preventDefault();
-    const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-    for (let j = 0; j < Math.min(paste.length, 6); j++) {
-      $otpInputs[j].value = paste[j];
-    }
-    if (paste.length >= 6) $otpInputs[5].focus();
-    checkOtpComplete();
-  });
-});
-
-function checkOtpComplete() {
-  const code = Array.from($otpInputs).map(i => i.value).join('');
-  $verifyBtn.disabled = code.length !== 6;
-}
-
-function getOtpCode() {
-  return Array.from($otpInputs).map(i => i.value).join('');
-}
-
-function startCountdown() {
-  let seconds = 60;
-  document.getElementById('countdown').textContent = seconds;
-  document.getElementById('otpTimer').style.display = 'block';
-  document.getElementById('otpResendWrap').style.display = 'none';
-
-  clearInterval(countdownInterval);
-  countdownInterval = setInterval(() => {
-    seconds--;
-    document.getElementById('countdown').textContent = seconds;
-    if (seconds <= 0) {
-      clearInterval(countdownInterval);
-      document.getElementById('otpTimer').style.display = 'none';
-      document.getElementById('otpResendWrap').style.display = 'block';
-    }
-  }, 1000);
-}
 
 // "Çarxı Fırlat" button — cihaz limiti ilə
 $sendCodeBtn.addEventListener('click', () => {
